@@ -4,9 +4,10 @@ const { endpoints, results } = require('./data')
 const { supabase } = require('./db')
 const { sendAlert } = require('./alert')
 
+const alertedEndpoints = new Set()
+
 cron.schedule('*/1 * * * *', async () => {
     console.log('Checking APIs...')
-    console.log('Endpoints:', endpoints)
 
     for (const endpoint of endpoints) {
         const start = Date.now()
@@ -25,8 +26,10 @@ cron.schedule('*/1 * * * *', async () => {
 
             results.push(result)
 
-            const { error } = await supabase.from('result').insert(result)
+            const { error } = await supabase.from('results').insert(result)
             if (error) console.log('Supabase error:', error)
+
+            alertedEndpoints.delete(endpoint.url)
 
             console.log(`✅ ${endpoint.name} — ${response.status} — ${latency}ms`)
 
@@ -42,10 +45,13 @@ cron.schedule('*/1 * * * *', async () => {
 
             results.push(result)
 
-            const { error2 } = await supabase.from('result').insert(result)
+            const { error2 } = await supabase.from('results').insert(result)
             if (error2) console.log('Supabase error:', error2)
 
-            await sendAlert(endpoint.name, endpoint.url)
+            if (!alertedEndpoints.has(endpoint.url)) {
+                await sendAlert(endpoint.name, endpoint.url)
+                alertedEndpoints.add(endpoint.url)
+            }
 
             console.log(`❌ ${endpoint.name} — DOWN`)
         }
