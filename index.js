@@ -38,8 +38,8 @@ app.delete('/delete', async (req, res) => {
     res.json({ message: 'Deleted successfully', endpoints })
 })
 
-app.listen(3000, async () => {
-    console.log('Server started on port 3000')
+app.listen(5000, async () => {
+    console.log('Server started on port 5000')
     const { data, error } = await supabase.from('endpoints').select('*')
     if (error) {
         console.log('Error loading endpoints:', error)
